@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - custom attributes [particles]</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #ffffff;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				font-weight: bold;
+
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+			}
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+				z-index:100;
+			}
+			a { color: #ff0000 }
+		</style>
+	</head>
+
+	<body>
+		<div id="container"></div>
+
+		<script src="js/three.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="shaders/generic_particle_vertex_shader.js"></script>
+		<script src="shaders/frag_shader_frag_coord.js"></script>
+		<script>
+		var renderer, scene, camera, mouseX, mouseY;
+
+		var WIDTH = window.innerWidth;
+		var HEIGHT = window.innerHeight;
+		var width = 500.0;
+		var height = 200.0;
+
+		init();
+		animate();
+
+		function init() {
+			camera = new THREE.PerspectiveCamera( 60, WIDTH / HEIGHT, 0.1, 1000 );
+			camera.position.z = 120.0;
+
+			var controls = new THREE.OrbitControls( camera );
+
+			scene = new THREE.Scene();
+
+			var plane = new THREE.PlaneGeometry( width, height);
+			//plane.translate(width / 2.0, height / 2.0, 0);
+
+			var uniforms = {
+				resolution : {type: "v2", value: new THREE.Vector2(width, height)},
+				time: {type: "f", value: performance.now()},
+			}
+
+			var material = new THREE.RawShaderMaterial( {
+				uniforms: uniforms,
+				vertexShader:   vertexShader,
+				fragmentShader: fragShaderSineTimeRotating, // fragShaderSineTime, // fragShaderSine, // fragShaderFragCoord,
+				side:THREE.DoubleSide
+			});
+
+			fullScreenQuad = new THREE.Mesh( plane, material );
+			scene.add(fullScreenQuad);
+
+			renderer = new THREE.WebGLRenderer();
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( WIDTH, HEIGHT );
+
+			var container = document.getElementById( 'container' );
+			container.appendChild( renderer.domElement );
+
+			window.addEventListener('resize', onWindowResize, false);
+			window.addEventListener('mousemove', onDocumentMouseMove, false);
+
+		}
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+		}
+
+		function onDocumentMouseMove(event) {
+			event.preventDefault();
+			mouseX = (event.clientX / window.innerWidth) ;
+			mouseY = -(event.clientY / window.innerHeight) ;
+		}
+
+		function animate() {
+			requestAnimationFrame( animate );
+			render();
+		}
+
+		function render() {
+			fullScreenQuad.material.uniforms.time.value = performance.now() / 1e3;
+			renderer.render( scene, camera );
+		}
+
+	</script>
+
+</body>
+
+</html>

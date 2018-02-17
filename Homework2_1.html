@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Particles</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #ffffff;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				font-weight: bold;
+
+				background-color: #ffffff;
+				margin: 0px;
+				overflow: hidden;
+			}
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+				z-index:100;
+			}
+			a { color: #ff0000 }
+		</style>
+	</head>
+
+	<body>
+		<div id="container"></div>
+
+		<script src="js/three.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script type="text/javascript" src="js/DAT.GUI.min.js"></script>
+		<script type="text/javascript" src="js/vertexShader_particles.js"></script>
+		<script type="text/javascript" src="js/fragShader_particles.js"></script>
+
+		<script>
+
+		var renderer, scene, camera, mesh,fullScreenQuad, plane;
+		var mouseX, mouseY;
+		var particle_color1, particle_color2;
+
+		var WIDTH = window.innerWidth;
+		var HEIGHT = window.innerHeight;
+
+		init();
+		animate();
+
+		function init() {
+
+			camera = new THREE.PerspectiveCamera( 60, WIDTH / HEIGHT, 0.1, 50 );
+
+			camera.position.z = 4.0;
+
+
+			scene = new THREE.Scene();
+
+			plane = new THREE.PlaneGeometry( WIDTH, HEIGHT);
+			var particle_color1_value = '#a3b1f0';
+			var particle_color2_value = '#937a7a';
+
+			particle_color1 = new THREE.Color( particle_color1_value );
+			particle_color2 = new THREE.Color( particle_color2_value );
+
+			var uniforms = {
+				resolution : {type: "v2", value: new THREE.Vector2()},
+				iGlobalTime: {type: "f", value: 1.0},
+				mouse: {type: "v2", value: new THREE.Vector2()},
+				particle_color1: {type: "c", value: particle_color1},
+				particle_color2: {type: "c", value: particle_color2},
+			}
+			uniforms.resolution.value.x = WIDTH;
+			uniforms.resolution.value.y = HEIGHT;
+
+			var material = new THREE.RawShaderMaterial( {
+				uniforms: uniforms,
+				vertexShader:   vertexShader_particles,
+				fragmentShader: fragShader_particles
+			});
+
+			fullScreenQuad = new THREE.Mesh( plane, material );
+			scene.add(fullScreenQuad);
+
+			renderer = new THREE.WebGLRenderer();
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( WIDTH, HEIGHT );
+
+			var container = document.getElementById( 'container' );
+			container.appendChild( renderer.domElement );
+			window.addEventListener( 'resize', onWindowResize, false );
+			window.addEventListener('mousemove', onDocumentMouseMove, false);
+
+			// GUI
+			var gui = new dat.GUI();
+			var gui_controls = new function() {
+								this.particle_color1 = particle_color1_value;
+								this.particle_color2 = particle_color2_value;
+			}
+			gui.addColor(gui_controls, 'particle_color1').onChange(function(value){
+				 fullScreenQuad.material.uniforms.particle_color1.value = new THREE.Color(value); //1.2;
+			});
+			gui.addColor(gui_controls, 'particle_color2').onChange(function(value) {
+				fullScreenQuad.material.uniforms.particle_color2.value = new THREE.Color(value);  // float scale = config.w;,
+			});
+		}
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+		}
+
+		function onDocumentMouseMove(event) {
+			event.preventDefault();
+			mouseX = (event.clientX / window.innerWidth) ;
+			mouseY = -(event.clientY / window.innerHeight) ;
+		}
+
+		function animate() {
+			requestAnimationFrame( animate );
+			render();
+		}
+
+		function render() {
+			fullScreenQuad.material.uniforms.iGlobalTime.value = performance.now()/1000.0;
+			fullScreenQuad.material.uniforms.mouse.value.x = mouseX;
+			fullScreenQuad.material.uniforms.mouse.value.y = mouseY;
+			renderer.render( scene, camera );
+		}
+
+	</script>
+
+</body>
+
+</html>
